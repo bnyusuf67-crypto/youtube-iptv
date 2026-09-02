@@ -1,42 +1,41 @@
 import yt_dlp
-import os
 
+# Nokta atışı canlı yayın URL'lerini doğrudan veriyoruz
 KANALLAR = {
-    "TRT Haber": "@trthaber",
-    "Halk TV": "@Halktvkanali",
-    "Sözcü TV": "@sozcuTelevizyonu",
-    "Habertürk": "@haberturktv"
+    "TRT Haber": "https://www.youtube.com/@trthaber/live",
+    "Bizimev TV": "https://www.youtube.com/@bizimevtv2000/live",
+    "Sözcü TV": "https://www.youtube.com/watch?v=ztmY_cCtUl0",
+    "Diyanet Çocuk": "https://m.youtube.com/watch?v=_VsMIRdOtXI&pp=uAQw0gcJCSUBLa19xc3H"
 }
 
-def get_m3u8(channel_handle):
-    url = f"https://youtube.com{channel_handle}/live"
-    
-    # İŞTE IP ENGELİNİ AŞAN FORMAT AYARLARI
+def get_m3u8(live_url):
     ydl_opts = {
-        # 'best' yerine doğrudan '95' veya '96' gibi saf HLS format kodlarını zorluyoruz
-        # Bu formatlar genellikle IP kilidine takılmadan dış oynatıcılarda (VLC vb.) çalışır
         'format': '95/96/bestvideo+bestaudio/best', 
         'quiet': True,
         'no_warnings': True,
+        # Sadece YouTube ekstraktörünü zorla, harici DNS aramalarını/web sayfalarını engelle
+        'allowed_extractors': ['youtube', 'youtube:live'], 
         'extractor_args': {
             'youtube': {
-                'player_client': ['web_embedded'], # Gömülü oynatıcı taklidi yaparak IP kilidini esnetir
+                'player_client': ['web_embedded'],
             }
         }
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            info = ydl.extract_info(url, download=False)
+            info = ydl.extract_info(live_url, download=False)
             return info.get('url')
-        except:
+        except Exception as e:
+            # Hatanın ne olduğunu tam görmek için yazdırıyoruz
+            print(f"Bağlantı hatası: {e}")
             return None
 
 # M3U Dosyasını Oluşturma
 m3u_content = "#EXTM3U\n"
-for kanal_adi, handle in KANALLAR.items():
+for kanal_adi, url in KANALLAR.items():
     print(f"{kanal_adi} linki çözülüyor...")
-    m3u8_url = get_m3u8(handle)
+    m3u8_url = get_m3u8(url)
     if m3u8_url:
         m3u_content += f'#EXTINF:-1 tvg-name="{kanal_adi}",{kanal_adi}\n{m3u8_url}\n'
 
