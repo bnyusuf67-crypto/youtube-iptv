@@ -3,7 +3,7 @@ name: YouTube IPTV Guncelleme
 on:
   schedule:
     # Her 3 saatte bir otomatik çalışır (UTC saatine göredir)
-    - cron: '0 */3 * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch: # İstediğiniz zaman manuel tetiklemek için button ekler
 
 jobs:
@@ -21,12 +21,19 @@ jobs:
       with:
         python-python: '3.10'
 
-    - name: Gerekli Kütüphaneleri Yükle
+    - name: Gerekli Kütüphaneleri Yükle ve Güncelle
       run: |
-        pip install yt-dlp
+        pip install --upgrade pip
+        pip install --upgrade yt-dlp
+
+    - name: DNS Ayarlarını Düzelt (İnterneti Garantiye Al)
+      run: |
+        echo "nameserver 1.1.1.1" | sudo tee /etc/resolv.conf
+        echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
 
     - name: Scripti Çalıştır ve Linkleri Topla
       run: python guncelle.py
+
 
     - name: Değişiklikleri Repoya Kaydet (Push)
       run: |
